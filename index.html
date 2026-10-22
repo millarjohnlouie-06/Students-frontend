@@ -13,10 +13,12 @@
     </style>
 </head>
 <body>
-    <h2>Add New Record</h2>
+    <h2>Add New Attendance Record</h2>
     <form id="dataForm">
-        <input type="text" id="title" placeholder="Record Title (e.g., John Millar)" required>
-        <input type="text" id="content" placeholder="Record Content (e.g., Present - Computer Networks)" required>
+        <input type="text" id="studentId" placeholder="Student ID (e.g., 2026-0013)" required>
+        <input type="text" id="studentName" placeholder="Student Name (e.g., John Millar)" required>
+        <input type="text" id="subjectName" placeholder="Subject Name (e.g., Computer Networks)" required>
+        <input type="text" id="section" placeholder="Section (e.g., BSIT-3A)" required>
         <button type="submit">Submit to Database</button>
     </form>
 
@@ -24,7 +26,7 @@
     <div id="recordsContainer">Loading...</div>
 
     <script>
-        // IMPORTANT: Replace this URL with your exact Vercel deployment URL ending with /api
+        // IMPORTANT: Replace this URL with your actual Vercel deployment URL ending with /api
         const VERCEL_API_URL = 'https://student-api-backend-dehh.vercel.app/api';
 
         // Function to fetch and display records
@@ -43,11 +45,14 @@
                 records.forEach(record => {
                     const div = document.createElement('div');
                     div.className = 'card';
-                    div.innerHTML = `<strong>${record.title || 'Untitled'}</strong><br>${record.content || ''}`;
+                    div.innerHTML = `
+                        <strong>${record.studentName || 'Unknown Student'}</strong> (${record.studentId || 'No ID'})<br>
+                        <em>Subject:</em> ${record.subjectName || 'N/A'} - ${record.section || 'N/A'}
+                    `;
                     container.appendChild(div);
                 });
             } catch (error) {
-                document.getElementById('recordsContainer').innerText = 'Error loading records.';
+                document.getElementById('recordsContainer دب').innerText = 'Error loading records.';
                 console.error(error);
             }
         }
@@ -55,14 +60,16 @@
         // Function to handle form submission
         document.getElementById('dataForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const title = document.getElementById('title').value;
-            const content = document.getElementById('content').value;
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+            const subjectName = document.getElementById('subjectName').value;
+            const section = document.getElementById('section').value;
 
             try {
                 const response = await fetch(VERCEL_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, content })
+                    body: JSON.stringify({ studentId, studentName, subjectName, section })
                 });
 
                 if (response.ok) {
