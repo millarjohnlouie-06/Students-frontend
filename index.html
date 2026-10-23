@@ -3,67 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance Database Project</title>
+    <title>Laboratory Attendance Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
-        .card { background: white; border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-        input, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
-        button { background-color: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0051a2; }
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent-bg: #eff6ff;
+            --badge-bg: #dbeafe;
+            --badge-text: #1e40af;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 32px 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        /* App Header */
+        header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Card Sections */
+        .card-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Search Filter */
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        /* Records List */
+        .records-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .record-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+
+        .record-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .student-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .student-info p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .badge-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .badge {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .id-tag {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .count-badge {
+            font-size: 0.8rem;
+            background: var(--accent-bg);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 32px 0;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 500px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+            .record-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .badge-group { align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
-    <h2>Add New Attendance Record</h2>
-    <form id="dataForm">
-        <input type="text" id="studentId" placeholder="Student ID (e.g., 2026-0013)" required>
-        <input type="text" id="studentName" placeholder="Student Name (e.g., John Millar)" required>
-        <input type="text" id="subjectName" placeholder="Subject Name (e.g., Computer Networks)" required>
-        <input type="text" id="section" placeholder="Section (e.g., BSIT-3A)" required>
-        <button type="submit">Submit to Database</button>
-    </form>
+    <div class="container">
+        <header>
+            <h1>Laboratory Attendance System</h1>
+            <p>Full-Stack Attendance Logger & MongoDB Database Viewer</p>
+        </header>
 
-    <h2>Database Records</h2>
-    <div id="recordsContainer">Loading...</div>
+        <!-- Form Card -->
+        <div class="card-panel">
+            <h2 class="section-title">Log New Attendance</h2>
+            <form id="dataForm">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="studentId">Student ID</label>
+                        <input type="text" id="studentId" placeholder="2026-0013" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="studentName">Student Name</label>
+                        <input type="text" id="studentName" placeholder="John Louie Millar" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="subjectName">Subject</label>
+                        <input type="text" id="subjectName" placeholder="Computer Networks" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="section">Section</label>
+                        <input type="text" id="section" placeholder="BSIT-3A" required>
+                    </div>
+                    <div class="input-group full-width">
+                        <button type="submit" id="submitBtn">Submit Record</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Records Panel -->
+        <div class="card-panel">
+            <div class="section-title">
+                <span>Database Records</span>
+                <span id="recordCount" class="count-badge">0 Records</span>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name, student ID, or subject...">
+            </div>
+
+            <div id="recordsContainer" class="records-list">
+                <div class="empty-state">Loading attendance records...</div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // IMPORTANT: Replace this URL with your actual Vercel deployment URL ending with /api
         const VERCEL_API_URL = 'https://student-api-backend-dehh.vercel.app/api';
+        let allRecords = [];
 
-        // Function to fetch and display records
         async function loadRecords() {
+            const container = document.getElementById('recordsContainer');
             try {
                 const response = await fetch(VERCEL_API_URL);
-                const records = await response.json();
-                const container = document.getElementById('recordsContainer');
-                container.innerHTML = '';
-                
-                if (records.length === 0) {
-                    container.innerHTML = '<p>No records found.</p>';
-                    return;
-                }
-
-                records.forEach(record => {
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    div.innerHTML = `
-                        <strong>${record.studentName || 'Unknown Student'}</strong> (${record.studentId || 'No ID'})<br>
-                        <em>Subject:</em> ${record.subjectName || 'N/A'} - ${record.section || 'N/A'}
-                    `;
-                    container.appendChild(div);
-                });
+                allRecords = await response.json();
+                renderRecords(allRecords);
             } catch (error) {
-                document.getElementById('recordsContainer دب').innerText = 'Error loading records.';
-                console.error(error);
+                container.innerHTML = '<div class="empty-state">Error connecting to database API.</div>';
+                console.error('Fetch error:', error);
             }
         }
 
-        // Function to handle form submission
+        function renderRecords(records) {
+            const container = document.getElementById('recordsContainer');
+            const countBadge = document.getElementById('recordCount');
+            
+            countBadge.innerText = `${records.length} ${records.length === 1 ? 'Record' : 'Records'}`;
+            container.innerHTML = '';
+
+            if (!records || records.length === 0) {
+                container.innerHTML = '<div class="empty-state">No matching records found.</div>';
+                return;
+            }
+
+            records.forEach(record => {
+                const div = document.createElement('div');
+                div.className = 'record-card';
+                div.innerHTML = `
+                    <div class="student-info">
+                        <h3>${record.studentName || 'Unknown Student'}</h3>
+                        <p>${record.subjectName || 'No Subject Defined'}</p>
+                    </div>
+                    <div class="badge-group">
+                        <span class="badge">${record.section || 'N/A'}</span>
+                        <span class="id-tag">ID: ${record.studentId || 'N/A'}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Live Search Filter
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allRecords.filter(r => 
+                (r.studentName && r.studentName.toLowerCase().includes(query)) ||
+                (r.studentId && r.studentId.toLowerCase().includes(query)) ||
+                (r.subjectName && r.subjectName.toLowerCase().includes(query)) ||
+                (r.section && r.section.toLowerCase().includes(query))
+            );
+            renderRecords(filtered);
+        });
+
+        // Form Submission
         document.getElementById('dataForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            
             const studentId = document.getElementById('studentId').value;
             const studentName = document.getElementById('studentName').value;
             const subjectName = document.getElementById('subjectName').value;
             const section = document.getElementById('section').value;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting...';
 
             try {
                 const response = await fetch(VERCEL_API_URL, {
@@ -73,19 +342,21 @@
                 });
 
                 if (response.ok) {
-                    // Clear form and reload records
                     document.getElementById('dataForm').reset();
-                    loadRecords();
+                    await loadRecords();
                 } else {
-                    alert('Failed to submit record.');
+                    alert('Submission failed. Check backend endpoint.');
                 }
             } catch (error) {
-                alert('Failed to connect to backend API.');
-                console.error(error);
+                alert('Connection error. Could not reach server.');
+                console.error('Submit error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Submit Record';
             }
         });
 
-        // Initial load
+        // Initial Load
         loadRecords();
     </script>
 </body>
