@@ -1,363 +1,975 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratory Attendance Management System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Academic Attendance Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        darkbg: '#0B132B',
+                        cardbg: '#1C2541',
+                        surfacebg: '#111827',
+                        bordercolor: '#374151'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --accent-bg: #eff6ff;
-            --badge-bg: #dbeafe;
-            --badge-text: #1e40af;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            padding: 32px 16px;
-            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1322;
+            color: #f3f4f6;
         }
-
-        .container {
-            max-width: 720px;
-            margin: 0 auto;
+        /* Glassmorphism utility */
+        .glass-card {
+            background: rgba(28, 37, 65, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-
-        /* App Header */
-        header {
-            margin-bottom: 24px;
-            text-align: center;
+        .glass-header {
+            background: rgba(11, 19, 43, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-
-        header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        header p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            margin-top: 4px;
+        ::-webkit-scrollbar-track {
+            background: #0b132b;
         }
-
-        /* Card Sections */
-        .card-panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            margin-bottom: 24px;
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
         }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
         }
-
-        /* Form Controls */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .full-width {
-            grid-column: span 2;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.825rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            background-color: #fff;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 8px;
-        }
-
-        button:hover { background-color: var(--primary-hover); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* Search Filter */
-        .search-box {
-            margin-bottom: 16px;
-        }
-
-        /* Records List */
-        .records-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .record-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: border-color 0.2s;
-        }
-
-        .record-card:hover {
-            border-color: #cbd5e1;
-        }
-
-        .student-info h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .student-info p {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .badge-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 4px;
-        }
-
-        .badge {
-            background: var(--badge-bg);
-            color: var(--badge-text);
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-        }
-
-        .id-tag {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-family: monospace;
-        }
-
-        .count-badge {
-            font-size: 0.8rem;
-            background: var(--accent-bg);
-            color: var(--primary);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 32px 0;
-            font-size: 0.95rem;
-        }
-
-        @media (max-width: 500px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .full-width { grid-column: span 1; }
-            .record-card { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .badge-group { align-items: flex-start; }
-        }
+        /* Json viewer tree styling */
+        .json-key { color: #f87171; }
+        .json-string { color: #4ade80; }
+        .json-number { color: #60a5fa; }
+        .json-boolean { color: #facc15; }
+        .json-null { color: #9ca3af; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Laboratory Attendance System</h1>
-            <p>Full-Stack Attendance Logger & MongoDB Database Viewer</p>
-        </header>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
 
-        <!-- Form Card -->
-        <div class="card-panel">
-            <h2 class="section-title">Log New Attendance</h2>
-            <form id="dataForm">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label for="studentId">Student ID</label>
-                        <input type="text" id="studentId" placeholder="2026-0013" required>
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 glass-header px-4 lg:px-8 py-3 transition-all">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-clipboard-user text-xl text-slate-950"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        EduTrack Pro
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MongoDB Schema v2.6</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Academic Attendance & Record Management Portal</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Toolbar -->
+            <div class="flex items-center gap-3">
+                <button onclick="openSchemaModal()" class="px-3.5 py-2 text-xs font-mono font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-database text-teal-400"></i>
+                    <span class="hidden md:inline">Inspect Mongo DB JSON</span>
+                </button>
+
+                <button onclick="openAddAttendanceModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 shadow-md shadow-emerald-500/20 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                    <span>Mark Attendance</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+
+        <!-- Active Context Banner / Filters -->
+        <section class="glass-card rounded-2xl p-5 border border-slate-800">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-700/60">
+                <div class="space-y-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-mono text-slate-400 uppercase tracking-wider">Active Course Context:</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            <i class="fa-solid fa-book-open text-xs"></i>
+                            <span id="displaySubject">Computer Networks</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                            <i class="fa-solid fa-users text-xs"></i>
+                            <span id="displaySection">BSCS-2A</span>
+                        </span>
                     </div>
-                    <div class="input-group">
-                        <label for="studentName">Student Name</label>
-                        <input type="text" id="studentName" placeholder="John Louie Millar" required>
+                    <p class="text-sm text-slate-300">Viewing structured attendance records mapped directly to MongoDB schema objects.</p>
+                </div>
+
+                <!-- Global Selectors -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 uppercase font-mono mb-1">Subject Filter</label>
+                        <select id="filterSubject" onchange="applyFilters()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">All Subjects</option>
+                            <option value="Computer Networks" selected>Computer Networks</option>
+                            <option value="Data Structures & Algorithms">Data Structures & Algorithms</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Database Systems">Database Systems</option>
+                        </select>
                     </div>
-                    <div class="input-group">
-                        <label for="subjectName">Subject</label>
-                        <input type="text" id="subjectName" placeholder="Computer Networks" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="section">Section</label>
-                        <input type="text" id="section" placeholder="BSIT-3A" required>
-                    </div>
-                    <div class="input-group full-width">
-                        <button type="submit" id="submitBtn">Submit Record</button>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 uppercase font-mono mb-1">Section Filter</label>
+                        <select id="filterSection" onchange="applyFilters()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">All Sections</option>
+                            <option value="BSCS-2A" selected>BSCS-2A</option>
+                            <option value="BSCS-2B">BSCS-2B</option>
+                            <option value="BSIT-3A">BSIT-3A</option>
+                        </select>
                     </div>
                 </div>
-            </form>
-        </div>
-
-        <!-- Records Panel -->
-        <div class="card-panel">
-            <div class="section-title">
-                <span>Database Records</span>
-                <span id="recordCount" class="count-badge">0 Records</span>
             </div>
 
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search by name, student ID, or subject...">
+            <!-- Dashboard Key Performance Indicators (KPIs) -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4">
+                <!-- KPI 1: Attendance Rate -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>Overall Rate</span>
+                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpiRate" class="text-2xl font-bold text-white">88.5%</span>
+                        <span class="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">+2.4%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="kpiRateBar" class="bg-emerald-500 h-full rounded-full" style="width: 88.5%"></div>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Present -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>Present Logs</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="kpiPresent" class="text-2xl font-bold text-emerald-400">0</span>
+                        <span class="text-xs text-slate-500 ml-1">records</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">On-time attendance</p>
+                </div>
+
+                <!-- KPI 3: Late -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>Late Logs</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="kpiLate" class="text-2xl font-bold text-amber-400">0</span>
+                        <span class="text-xs text-slate-500 ml-1">records</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Grace period arrivals</p>
+                </div>
+
+                <!-- KPI 4: Absent -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>Absent Logs</span>
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="kpiAbsent" class="text-2xl font-bold text-rose-400">0</span>
+                        <span class="text-xs text-slate-500 ml-1">records</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Unexcused absences</p>
+                </div>
+
+                <!-- KPI 5: Excused -->
+                <div class="col-span-2 md:col-span-1 bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>Excused Logs</span>
+                        <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                    </div>
+                    <div class="mt-2">
+                        <span id="kpiExcused" class="text-2xl font-bold text-sky-400">0</span>
+                        <span class="text-xs text-slate-500 ml-1">records</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">With valid note</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attendance Table Section -->
+        <section class="glass-card rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+            
+            <!-- Table Action Toolbar -->
+            <div class="p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-base font-semibold text-white">Student Attendance Records</h2>
+                    <span id="recordCountBadge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full font-mono">0 records</span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Search Input -->
+                    <div class="relative min-w-[220px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search Student ID, Name..." class="w-full bg-slate-900 border border-slate-700 pl-8 pr-3 py-1.5 text-xs rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                    </div>
+
+                    <!-- Status Filter -->
+                    <select id="filterStatus" onchange="applyFilters()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Present">Present Only</option>
+                        <option value="Late">Late Only</option>
+                        <option value="Absent">Absent Only</option>
+                        <option value="Excused">Excused Only</option>
+                    </select>
+
+                    <!-- Export Buttons -->
+                    <button onclick="exportCSV()" title="Export CSV" class="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                        <span class="hidden sm:inline">Export</span>
+                    </button>
+                    <button onclick="window.print()" title="Print Summary" class="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-print text-sky-400"></i>
+                        <span class="hidden sm:inline">Print</span>
+                    </button>
+                </div>
             </div>
 
-            <div id="recordsContainer" class="records-list">
-                <div class="empty-state">Loading attendance records...</div>
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900/80 border-b border-slate-800 text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                            <th class="py-3.5 px-4 font-semibold">Student Info</th>
+                            <th class="py-3.5 px-4 font-semibold">Subject & Section</th>
+                            <th class="py-3.5 px-4 font-semibold">Latest Attendance Session</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Logs Count</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Overall Status</th>
+                            <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody" class="divide-y divide-slate-800/60 text-xs">
+                        <!-- Dynamic Rows Rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Loader -->
+            <div id="emptyState" class="hidden py-12 text-center">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-600 mb-3"></i>
+                <p class="text-sm font-medium text-slate-400">No matching student documents found</p>
+                <p class="text-xs text-slate-600 mt-1">Try relaxing your search terms or filters.</p>
+            </div>
+
+            <!-- Footer Pagination / Info -->
+            <div class="p-4 bg-slate-900/40 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+                <span>Displaying synchronized MongoDB collection records</span>
+                <div class="flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="font-mono text-[11px]">Database Status: Connected (Local Memory Store)</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Schema Document Viewer Modal -->
+    <div id="schemaModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-3xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-code text-teal-400"></i>
+                    <h3 class="text-sm font-semibold text-white">MongoDB BSON Document Inspector</h3>
+                </div>
+                <button onclick="closeSchemaModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 bg-slate-950 overflow-y-auto font-mono text-xs text-slate-300 leading-relaxed flex-1">
+                <div class="mb-3 text-slate-400 text-[11px]">
+                    // Matching live MongoDB structure for selected document (e.g., Mock Student 6)
+                </div>
+                <pre id="jsonContent" class="whitespace-pre-wrap select-all"></pre>
+            </div>
+            <div class="p-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
+                <span class="text-xs text-slate-400 font-mono">Collection: <span class="text-teal-400">attendance_records</span></span>
+                <button onclick="copyJsonToClipboard()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i>
+                    <span id="copyBtnText">Copy Raw JSON</span>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Mark / Add Attendance Modal -->
+    <div id="addAttendanceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-[user-check] text-emerald-400"></i>
+                    <h3 id="modalFormTitle" class="text-sm font-semibold text-white">Mark / Update Attendance Log</h3>
+                </div>
+                <button onclick="closeAddAttendanceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="attendanceForm" onsubmit="handleFormSubmit(event)" class="p-5 space-y-4">
+                <input type="hidden" id="formDocId" value="">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Student ID *</label>
+                        <input type="text" id="formStudentId" required placeholder="e.g. 2026-0006" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Student Name *</label>
+                        <input type="text" id="formStudentName" required placeholder="e.g. Mock Student 6" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Subject Name *</label>
+                        <select id="formSubjectName" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Computer Networks">Computer Networks</option>
+                            <option value="Data Structures & Algorithms">Data Structures & Algorithms</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Database Systems">Database Systems</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Section *</label>
+                        <select id="formSection" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="BSCS-2A">BSCS-2A</option>
+                            <option value="BSCS-2B">BSCS-2B</option>
+                            <option value="BSIT-3A">BSIT-3A</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+                <p class="text-xs font-semibold text-emerald-400">New Attendance Entry Item</p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Session Date *</label>
+                        <input type="date" id="formDate" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Status *</label>
+                        <select id="formStatus" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Present">Present</option>
+                            <option value="Late">Late</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Excused">Excused</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Time In / Timestamp</label>
+                    <input type="text" id="formTime" placeholder="e.g. 09:00 AM" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Remarks / Notes</label>
+                    <input type="text" id="formRemarks" placeholder="e.g. On-time submission, Submitted medical slip..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeAddAttendanceModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/20 transition">Save Attendance Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Detail Breakdown Modal -->
+    <div id="studentDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-2xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div id="studentDetailHeader" class="p-5 border-b border-slate-800 bg-slate-900/80 flex items-start justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 id="sdName" class="text-base font-bold text-white">Student Name</h3>
+                        <span id="sdId" class="px-2 py-0.5 rounded bg-slate-800 font-mono text-xs text-teal-300 border border-slate-700">2026-0000</span>
+                    </div>
+                    <p id="sdCourse" class="text-xs text-slate-400 mt-1">Computer Networks • Section BSCS-2A</p>
+                </div>
+                <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-5">
+                <!-- Mini Breakdown Stats -->
+                <div class="grid grid-cols-4 gap-3 text-center">
+                    <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                        <span class="block text-xs text-emerald-400 font-medium">Present</span>
+                        <span id="sdPresent" class="text-lg font-bold text-emerald-300">0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <span class="block text-xs text-amber-400 font-medium">Late</span>
+                        <span id="sdLate" class="text-lg font-bold text-amber-300">0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                        <span class="block text-xs text-rose-400 font-medium">Absent</span>
+                        <span id="sdAbsent" class="text-lg font-bold text-rose-300">0</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20">
+                        <span class="block text-xs text-sky-400 font-medium">Excused</span>
+                        <span id="sdExcused" class="text-lg font-bold text-sky-300">0</span>
+                    </div>
+                </div>
+
+                <!-- Timeline Logs -->
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                        <span>Attendance Array History (<span id="sdArrayCount">0</span> entries)</span>
+                        <span class="text-[10px] font-mono text-slate-500">MongoDB sub-documents</span>
+                    </h4>
+                    <div id="sdTimeline" class="space-y-2.5">
+                        <!-- Dynamic Entries -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 bg-slate-900/60 flex justify-between items-center text-xs">
+                <span id="sdObjectId" class="font-mono text-slate-500 truncate max-w-[300px]">_id: ObjectId(...)</span>
+                <button onclick="closeStudentDetailModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">Close Window</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-white shadow-2xl">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastMsg" class="text-xs font-medium">Action completed successfully.</span>
+    </div>
+
+    <!-- Application Logic Script -->
     <script>
-        const VERCEL_API_URL = 'https://student-api-backend-dehh.vercel.app/api';
-        let allRecords = [];
-
-        async function loadRecords() {
-            const container = document.getElementById('recordsContainer');
-            try {
-                const response = await fetch(VERCEL_API_URL);
-                allRecords = await response.json();
-                renderRecords(allRecords);
-            } catch (error) {
-                container.innerHTML = '<div class="empty-state">Error connecting to database API.</div>';
-                console.error('Fetch error:', error);
+        /**
+         * Seed Database strictly following the schema from the provided MongoDB UI image:
+         * {
+         *   _id: ObjectId('6ac6df3c1bbf61ec36865b74'),
+         *   studentId: "2026-0006",
+         *   studentName: "Mock Student 6",
+         *   subjectName: "Computer Networks",
+         *   section: "BSCS-2A",
+         *   attendance: Array [ { date, status, timeIn, remarks }, ... ]
+         * }
+         */
+        let attendanceDatabase = [
+            {
+                _id: "6ac6df3c1bbf61ec36865b74",
+                studentId: "2026-0006",
+                studentName: "Mock Student 6",
+                subjectName: "Computer Networks",
+                section: "BSCS-2A",
+                attendance: [
+                    { date: "2026-10-20", status: "Present", timeIn: "08:55 AM", remarks: "Arrived early for lecture" },
+                    { date: "2026-10-21", status: "Present", timeIn: "09:00 AM", remarks: "On time" },
+                    { date: "2026-10-22", status: "Late", timeIn: "09:18 AM", remarks: "Traffic delay noted" }
+                ]
+            },
+            {
+                _id: "6ac6df3c1bbf61ec36865b75",
+                studentId: "2026-0001",
+                studentName: "Mock Student 1",
+                subjectName: "Computer Networks",
+                section: "BSCS-2A",
+                attendance: [
+                    { date: "2026-10-20", status: "Present", timeIn: "08:58 AM", remarks: "On time" },
+                    { date: "2026-10-21", status: "Present", timeIn: "08:52 AM", remarks: "On time" },
+                    { date: "2026-10-22", status: "Present", timeIn: "08:59 AM", remarks: "On time" }
+                ]
+            },
+            {
+                _id: "6ac6df3c1bbf61ec36865b76",
+                studentId: "2026-0002",
+                studentName: "Mock Student 2",
+                subjectName: "Computer Networks",
+                section: "BSCS-2A",
+                attendance: [
+                    { date: "2026-10-20", status: "Absent", timeIn: "--", remarks: "Unexcused absence" },
+                    { date: "2026-10-21", status: "Excused", timeIn: "--", remarks: "Medical slip provided" },
+                    { date: "2026-10-22", status: "Present", timeIn: "09:02 AM", remarks: "On time" }
+                ]
+            },
+            {
+                _id: "6ac6df3c1bbf61ec36865b77",
+                studentId: "2026-0003",
+                studentName: "Mock Student 3",
+                subjectName: "Data Structures & Algorithms",
+                section: "BSCS-2B",
+                attendance: [
+                    { date: "2026-10-20", status: "Present", timeIn: "10:30 AM", remarks: "On time" },
+                    { date: "2026-10-22", status: "Late", timeIn: "10:45 AM", remarks: "15 mins late" }
+                ]
+            },
+            {
+                _id: "6ac6df3c1bbf61ec36865b78",
+                studentId: "2026-0004",
+                studentName: "Mock Student 4",
+                subjectName: "Web Development",
+                section: "BSIT-3A",
+                attendance: [
+                    { date: "2026-10-19", status: "Present", timeIn: "01:00 PM", remarks: "Lab Session" },
+                    { date: "2026-10-21", status: "Present", timeIn: "01:05 PM", remarks: "On time" }
+                ]
+            },
+            {
+                _id: "6ac6df3c1bbf61ec36865b79",
+                studentId: "2026-0005",
+                studentName: "Mock Student 5",
+                subjectName: "Database Systems",
+                section: "BSCS-2A",
+                attendance: [
+                    { date: "2026-10-20", status: "Present", timeIn: "02:00 PM", remarks: "Quiz day" },
+                    { date: "2026-10-22", status: "Absent", timeIn: "--", remarks: "No notice" }
+                ]
             }
-        }
+        ];
 
-        function renderRecords(records) {
-            const container = document.getElementById('recordsContainer');
-            const countBadge = document.getElementById('recordCount');
+        // Current inspection object context
+        let currentInspectedDocId = "6ac6df3c1bbf61ec36865b74";
+
+        // DOM Initialization
+        window.onload = function() {
+            // Set default date input to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('formDate').value = today;
+
+            renderDashboard();
+        };
+
+        // Render Dashboard Stats and Table
+        function renderDashboard() {
+            const subjectFilter = document.getElementById('filterSubject').value;
+            const sectionFilter = document.getElementById('filterSection').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            // Sync Header Badge Display
+            document.getElementById('displaySubject').innerText = subjectFilter === 'ALL' ? 'All Subjects' : subjectFilter;
+            document.getElementById('displaySection').innerText = sectionFilter === 'ALL' ? 'All Sections' : sectionFilter;
+
+            // Filter Records
+            let filteredDocs = attendanceDatabase.filter(doc => {
+                const matchSubject = subjectFilter === 'ALL' || doc.subjectName === subjectFilter;
+                const matchSection = sectionFilter === 'ALL' || doc.section === sectionFilter;
+                const matchSearch = doc.studentName.toLowerCase().includes(searchKeyword) || 
+                                    doc.studentId.toLowerCase().includes(searchKeyword) ||
+                                    doc.subjectName.toLowerCase().includes(searchKeyword);
+                
+                let matchStatus = true;
+                if (statusFilter !== 'ALL') {
+                    matchStatus = doc.attendance.some(att => att.status === statusFilter);
+                }
+
+                return matchSubject && matchSection && matchSearch && matchStatus;
+            });
+
+            // Calculate Overall KPI Statistics across filtered set
+            let totalPresent = 0, totalLate = 0, totalAbsent = 0, totalExcused = 0;
             
-            countBadge.innerText = `${records.length} ${records.length === 1 ? 'Record' : 'Records'}`;
-            container.innerHTML = '';
+            filteredDocs.forEach(doc => {
+                doc.attendance.forEach(log => {
+                    if (log.status === 'Present') totalPresent++;
+                    else if (log.status === 'Late') totalLate++;
+                    else if (log.status === 'Absent') totalAbsent++;
+                    else if (log.status === 'Excused') totalExcused++;
+                });
+            });
 
-            if (!records || records.length === 0) {
-                container.innerHTML = '<div class="empty-state">No matching records found.</div>';
+            const totalLogs = totalPresent + totalLate + totalAbsent + totalExcused;
+            const overallRate = totalLogs > 0 ? (((totalPresent + totalLate) / totalLogs) * 100).toFixed(1) : '0.0';
+
+            // Update KPI DOM
+            document.getElementById('kpiPresent').innerText = totalPresent;
+            document.getElementById('kpiLate').innerText = totalLate;
+            document.getElementById('kpiAbsent').innerText = totalAbsent;
+            document.getElementById('kpiExcused').innerText = totalExcused;
+            document.getElementById('kpiRate').innerText = overallRate + '%';
+            document.getElementById('kpiRateBar').style.width = overallRate + '%';
+            document.getElementById('recordCountBadge').innerText = filteredDocs.length + ' students';
+
+            // Render Table
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '';
+
+            const emptyState = document.getElementById('emptyState');
+
+            if (filteredDocs.length === 0) {
+                emptyState.classList.remove('hidden');
                 return;
+            } else {
+                emptyState.classList.add('hidden');
             }
 
-            records.forEach(record => {
-                const div = document.createElement('div');
-                div.className = 'record-card';
-                div.innerHTML = `
-                    <div class="student-info">
-                        <h3>${record.studentName || 'Unknown Student'}</h3>
-                        <p>${record.subjectName || 'No Subject Defined'}</p>
-                    </div>
-                    <div class="badge-group">
-                        <span class="badge">${record.section || 'N/A'}</span>
-                        <span class="id-tag">ID: ${record.studentId || 'N/A'}</span>
-                    </div>
+            filteredDocs.forEach(doc => {
+                const latestLog = doc.attendance[doc.attendance.length - 1] || { date: 'N/A', status: 'N/A', timeIn: '--', remarks: 'No logs' };
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition-colors";
+
+                // Status Badge Helper
+                const getBadge = (status) => {
+                    switch(status) {
+                        case 'Present': return `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Present</span>`;
+                        case 'Late': return `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Late</span>`;
+                        case 'Absent': return `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Absent</span>`;
+                        case 'Excused': return `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>Excused</span>`;
+                        default: return `<span class="px-2 py-0.5 rounded text-slate-500 bg-slate-800">None</span>`;
+                    }
+                };
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-300 font-mono text-xs border border-slate-700">
+                                ${doc.studentName.charAt(doc.studentName.length - 1)}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-white cursor-pointer hover:text-emerald-400 transition" onclick="openStudentDetailModal('${doc._id}')">${doc.studentName}</div>
+                                <div class="text-[11px] font-mono text-slate-400">${doc.studentId}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="text-slate-200 font-medium">${doc.subjectName}</div>
+                        <div class="text-[11px] text-slate-400 font-mono">${doc.section}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="text-slate-300 font-mono text-[11px]">${latestLog.date} ${latestLog.timeIn ? '• ' + latestLog.timeIn : ''}</div>
+                        <div class="text-[11px] text-slate-400 italic truncate max-w-[180px]">${latestLog.remarks || 'No remarks'}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-slate-300 text-[11px]">
+                            ${doc.attendance.length} sessions
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        ${getBadge(latestLog.status)}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="openStudentDetailModal('${doc._id}')" title="View Full History" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md transition">
+                                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                            </button>
+                            <button onclick="openEditModal('${doc._id}')" title="Add / Update Record" class="p-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-md transition">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="inspectDocument('${doc._id}')" title="View Mongo BSON JSON" class="p-1.5 text-teal-400 hover:text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 rounded-md transition">
+                                <i class="fa-solid fa-code text-xs"></i>
+                            </button>
+                            <button onclick="deleteDocument('${doc._id}')" title="Delete Student Record" class="p-1.5 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 rounded-md transition">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
                 `;
-                container.appendChild(div);
+                tbody.appendChild(tr);
             });
         }
 
-        // Live Search Filter
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = allRecords.filter(r => 
-                (r.studentName && r.studentName.toLowerCase().includes(query)) ||
-                (r.studentId && r.studentId.toLowerCase().includes(query)) ||
-                (r.subjectName && r.subjectName.toLowerCase().includes(query)) ||
-                (r.section && r.section.toLowerCase().includes(query))
-            );
-            renderRecords(filtered);
-        });
+        // Apply filters dynamically
+        function applyFilters() {
+            renderDashboard();
+        }
 
-        // Form Submission
-        document.getElementById('dataForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
+        // Open JSON Document Inspector Modal
+        function inspectDocument(id) {
+            currentInspectedDocId = id;
+            openSchemaModal();
+        }
+
+        function openSchemaModal() {
+            const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
+            const jsonPre = document.getElementById('jsonContent');
             
-            const studentId = document.getElementById('studentId').value;
-            const studentName = document.getElementById('studentName').value;
-            const subjectName = document.getElementById('subjectName').value;
-            const section = document.getElementById('section').value;
+            // Format strictly to simulate MongoDB Document View
+            const formattedBson = {
+                _id: `ObjectId('${doc._id}')`,
+                studentId: doc.studentId,
+                studentName: doc.studentName,
+                subjectName: doc.subjectName,
+                section: doc.section,
+                attendance: doc.attendance.map(a => ({
+                    date: a.date,
+                    status: a.status,
+                    timeIn: a.timeIn || '09:00 AM',
+                    remarks: a.remarks || ''
+                }))
+            };
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Submitting...';
+            jsonPre.innerHTML = syntaxHighlight(JSON.stringify(formattedBson, null, 2));
+            document.getElementById('schemaModal').classList.remove('hidden');
+        }
 
-            try {
-                const response = await fetch(VERCEL_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ studentId, studentName, subjectName, section })
-                });
+        function closeSchemaModal() {
+            document.getElementById('schemaModal').classList.add('hidden');
+        }
 
-                if (response.ok) {
-                    document.getElementById('dataForm').reset();
-                    await loadRecords();
-                } else {
-                    alert('Submission failed. Check backend endpoint.');
+        // Syntax Highlighting for JSON Modal
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
                 }
-            } catch (error) {
-                alert('Connection error. Could not reach server.');
-                console.error('Submit error:', error);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Submit Record';
-            }
-        });
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
 
-        // Initial Load
-        loadRecords();
+        // Copy raw JSON clipboard helper
+        function copyJsonToClipboard() {
+            const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
+            const text = JSON.stringify(doc, null, 2);
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const copyBtnText = document.getElementById('copyBtnText');
+            copyBtnText.innerText = 'Copied!';
+            setTimeout(() => { copyBtnText.innerText = 'Copy Raw JSON'; }, 2000);
+            showToast("MongoDB Object copied to clipboard!");
+        }
+
+        // Add / Edit Modal Controls
+        function openAddAttendanceModal() {
+            document.getElementById('modalFormTitle').innerText = 'Mark / Add Attendance Log';
+            document.getElementById('formDocId').value = '';
+            document.getElementById('formStudentId').value = '';
+            document.getElementById('formStudentName').value = '';
+            document.getElementById('formRemarks').value = '';
+            document.getElementById('formTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('addAttendanceModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const doc = attendanceDatabase.find(d => d._id === id);
+            if(!doc) return;
+
+            document.getElementById('modalFormTitle').innerText = 'Update Student Record';
+            document.getElementById('formDocId').value = doc._id;
+            document.getElementById('formStudentId').value = doc.studentId;
+            document.getElementById('formStudentName').value = doc.studentName;
+            document.getElementById('formSubjectName').value = doc.subjectName;
+            document.getElementById('formSection').value = doc.section;
+            document.getElementById('formTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('formRemarks').value = 'Updated log entry';
+
+            document.getElementById('addAttendanceModal').classList.remove('hidden');
+        }
+
+        function closeAddAttendanceModal() {
+            document.getElementById('addAttendanceModal').classList.add('hidden');
+        }
+
+        // Form Submit Handler
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const docId = document.getElementById('formDocId').value;
+            const studentId = document.getElementById('formStudentId').value;
+            const studentName = document.getElementById('formStudentName').value;
+            const subjectName = document.getElementById('formSubjectName').value;
+            const section = document.getElementById('formSection').value;
+            const date = document.getElementById('formDate').value;
+            const status = document.getElementById('formStatus').value;
+            const timeIn = document.getElementById('formTime').value || '09:00 AM';
+            const remarks = document.getElementById('formRemarks').value || 'Updated via portal';
+
+            const newLog = { date, status, timeIn, remarks };
+
+            if (docId) {
+                // Update Existing Document
+                const doc = attendanceDatabase.find(d => d._id === docId);
+                if (doc) {
+                    doc.studentId = studentId;
+                    doc.studentName = studentName;
+                    doc.subjectName = subjectName;
+                    doc.section = section;
+                    doc.attendance.push(newLog);
+                    showToast(`Updated attendance array for ${studentName}`);
+                }
+            } else {
+                // Create New Document
+                const newDoc = {
+                    _id: '6ac6df3c' + Math.random().toString(16).substr(2, 16),
+                    studentId,
+                    studentName,
+                    subjectName,
+                    section,
+                    attendance: [newLog]
+                };
+                attendanceDatabase.unshift(newDoc);
+                showToast(`New student document created for ${studentName}`);
+            }
+
+            closeAddAttendanceModal();
+            renderDashboard();
+        }
+
+        // Delete Document
+        function deleteDocument(id) {
+            const index = attendanceDatabase.findIndex(d => d._id === id);
+            if (index !== -1) {
+                const name = attendanceDatabase[index].studentName;
+                attendanceDatabase.splice(index, 1);
+                renderDashboard();
+                showToast(`Deleted document for ${name}`);
+            }
+        }
+
+        // Open Individual Student History Detail Modal
+        function openStudentDetailModal(id) {
+            const doc = attendanceDatabase.find(d => d._id === id);
+            if (!doc) return;
+
+            document.getElementById('sdName').innerText = doc.studentName;
+            document.getElementById('sdId').innerText = doc.studentId;
+            document.getElementById('sdCourse').innerText = `${doc.subjectName} • Section ${doc.section}`;
+            document.getElementById('sdObjectId').innerText = `_id: ObjectId('${doc._id}')`;
+            document.getElementById('sdArrayCount').innerText = doc.attendance.length;
+
+            let p = 0, l = 0, a = 0, e = 0;
+            doc.attendance.forEach(log => {
+                if(log.status==='Present') p++;
+                else if(log.status==='Late') l++;
+                else if(log.status==='Absent') a++;
+                else if(log.status==='Excused') e++;
+            });
+
+            document.getElementById('sdPresent').innerText = p;
+            document.getElementById('sdLate').innerText = l;
+            document.getElementById('sdAbsent').innerText = a;
+            document.getElementById('sdExcused').innerText = e;
+
+            const timeline = document.getElementById('sdTimeline');
+            timeline.innerHTML = '';
+
+            doc.attendance.slice().reverse().forEach((log, index) => {
+                const item = document.createElement('div');
+                item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs";
+                
+                let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                if(log.status==='Late') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if(log.status==='Absent') badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+                if(log.status==='Excused') badgeColor = "bg-sky-500/10 text-sky-400 border-sky-500/20";
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-slate-500 text-[10px]">#${doc.attendance.length - index}</span>
+                        <div>
+                            <div class="font-semibold text-slate-200">${log.date} ${log.timeIn ? '<span class="text-slate-400 font-normal">(' + log.timeIn + ')</span>' : ''}</div>
+                            <div class="text-[11px] text-slate-400 italic">${log.remarks || 'No notes added'}</div>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">
+                        ${log.status}
+                    </span>
+                `;
+                timeline.appendChild(item);
+            });
+
+            document.getElementById('studentDetailModal').classList.remove('hidden');
+        }
+
+        function closeStudentDetailModal() {
+            document.getElementById('studentDetailModal').classList.add('hidden');
+        }
+
+        // Export Table Data to CSV
+        function exportCSV() {
+            let csvRows = [["ObjectId", "StudentID", "StudentName", "SubjectName", "Section", "Date", "Status", "TimeIn", "Remarks"]];
+
+            attendanceDatabase.forEach(doc => {
+                doc.attendance.forEach(log => {
+                    csvRows.push([
+                        `"${doc._id}"`,
+                        `"${doc.studentId}"`,
+                        `"${doc.studentName}"`,
+                        `"${doc.subjectName}"`,
+                        `"${doc.section}"`,
+                        `"${log.date}"`,
+                        `"${log.status}"`,
+                        `"${log.timeIn || ''}"`,
+                        `"${log.remarks || ''}"`
+                    ]);
+                });
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `attendance_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("CSV Attendance Report downloaded successfully!");
+        }
+
+        // UI Toast Notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
     </script>
 </body>
 </html>
