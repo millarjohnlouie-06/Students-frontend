@@ -1,59 +1,44 @@
 <!-- Application Logic Script -->
     <script>
-        // Global variable holding attendance documents
         let attendanceDatabase = [];
-
-        // Current inspection object context
         let currentInspectedDocId = "";
 
-        // DOM Initialization: Fetch live data from Vercel instead of local memory store
         window.onload = function() {
-            // Set default date input to today
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('formDate').value = today;
+            const dateInput = document.getElementById('formDate');
+            if (dateInput) dateInput.value = today;
 
-            // Fetch live data from Vercel backend
             fetchAttendance();
         };
 
-        // Fetch attendance records from your live Vercel backend
         async function fetchAttendance() {
             try {
                 const response = await fetch('https://student-backend-khaki.vercel.app/api/attendance');
                 const data = await response.json();
                 console.log('Fetched attendance data:', data);
                 
-                // Assign live MongoDB data to our global database array
                 if (Array.isArray(data) && data.length > 0) {
                     attendanceDatabase = data;
                     currentInspectedDocId = attendanceDatabase[0]._id;
                 }
 
-                // Update UI status indicator in footer
-                const statusFooter = document.querySelector('span.font-mono.text-\\[11px\\]');
-                if (statusFooter) {
-                    statusFooter.innerText = "Database Status: Connected (MongoDB Atlas / Vercel Live)";
-                }
-
                 renderDashboard();
             } catch (error) {
                 console.error('Error fetching attendance:', error);
-                showToast("Error connecting to live backend database!");
+                // Fallback render even if fetch fails so the page isn't blank
+                renderDashboard();
             }
         }
 
-        // Render Dashboard Stats and Table
         function renderDashboard() {
             const subjectFilter = document.getElementById('filterSubject').value;
             const sectionFilter = document.getElementById('filterSection').value;
             const statusFilter = document.getElementById('filterStatus').value;
             const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
 
-            // Sync Header Badge Display
             document.getElementById('displaySubject').innerText = subjectFilter === 'ALL' ? 'All Subjects' : subjectFilter;
             document.getElementById('displaySection').innerText = sectionFilter === 'ALL' ? 'All Sections' : sectionFilter;
 
-            // Filter Records
             let filteredDocs = attendanceDatabase.filter(doc => {
                 const matchSubject = subjectFilter === 'ALL' || doc.subjectName === subjectFilter;
                 const matchSection = sectionFilter === 'ALL' || doc.section === sectionFilter;
@@ -69,7 +54,6 @@
                 return matchSubject && matchSection && matchSearch && matchStatus;
             });
 
-            // Calculate Overall KPI Statistics across filtered set
             let totalPresent = 0, totalLate = 0, totalAbsent = 0, totalExcused = 0;
             
             filteredDocs.forEach(doc => {
@@ -86,7 +70,6 @@
             const totalLogs = totalPresent + totalLate + totalAbsent + totalExcused;
             const overallRate = totalLogs > 0 ? (((totalPresent + totalLate) / totalLogs) * 100).toFixed(1) : '0.0';
 
-            // Update KPI DOM
             document.getElementById('kpiPresent').innerText = totalPresent;
             document.getElementById('kpiLate').innerText = totalLate;
             document.getElementById('kpiAbsent').innerText = totalAbsent;
@@ -95,7 +78,6 @@
             document.getElementById('kpiRateBar').style.width = overallRate + '%';
             document.getElementById('recordCountBadge').innerText = filteredDocs.length + ' students';
 
-            // Render Table
             const tbody = document.getElementById('attendanceTableBody');
             tbody.innerHTML = '';
 
@@ -114,7 +96,6 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/40 transition-colors";
 
-                // Status Badge Helper
                 const getBadge = (status) => {
                     switch(status) {
                         case 'Present': return `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Present</span>`;
@@ -176,22 +157,13 @@
             });
         }
 
-        // Apply filters dynamically
-        function applyFilters() {
-            renderDashboard();
-        }
-
-        // Open JSON Document Inspector Modal
-        function inspectDocument(id) {
-            currentInspectedDocId = id;
-            openSchemaModal();
-        }
+        function applyFilters() { renderDashboard(); }
+        function inspectDocument(id) { currentInspectedDocId = id; openSchemaModal(); }
 
         function openSchemaModal() {
             const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
             if (!doc) return;
             const jsonPre = document.getElementById('jsonContent');
-            
             const formattedBson = {
                 _id: `ObjectId('${doc._id}')`,
                 studentId: doc.studentId,
@@ -199,61 +171,36 @@
                 subjectName: doc.subjectName,
                 section: doc.section,
                 attendance: (doc.attendance || []).map(a => ({
-                    date: a.date,
-                    status: a.status,
-                    timeIn: a.timeIn || '09:00 AM',
-                    remarks: a.remarks || ''
+                    date: a.date, status: a.status, timeIn: a.timeIn || '09:00 AM', remarks: a.remarks || ''
                 }))
             };
-
             jsonPre.innerHTML = syntaxHighlight(JSON.stringify(formattedBson, null, 2));
             document.getElementById('schemaModal').classList.remove('hidden');
         }
 
-        function closeSchemaModal() {
-            document.getElementById('schemaModal').classList.add('hidden');
-        }
+        function closeSchemaModal() { document.getElementById('schemaModal').classList.add('hidden'); }
 
-        // Syntax Highlighting for JSON Modal
         function syntaxHighlight(json) {
             json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                 var cls = 'json-number';
                 if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'json-key';
-                    } else {
-                        cls = 'json-string';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'json-boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'json-null';
-                }
+                    if (/:$/.test(match)) { cls = 'json-key'; } else { cls = 'json-string'; }
+                } else if (/true|false/.test(match)) { cls = 'json-boolean'; } else if (/null/.test(match)) { cls = 'json-null'; }
                 return '<span class="' + cls + '">' + match + '</span>';
             });
         }
 
-        // Copy raw JSON clipboard helper
         function copyJsonToClipboard() {
             const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
             if (!doc) return;
-            const text = JSON.stringify(doc, null, 2);
-            
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
+            navigator.clipboard.writeText(JSON.stringify(doc, null, 2));
             const copyBtnText = document.getElementById('copyBtnText');
             copyBtnText.innerText = 'Copied!';
             setTimeout(() => { copyBtnText.innerText = 'Copy Raw JSON'; }, 2000);
             showToast("MongoDB Object copied to clipboard!");
         }
 
-        // Add / Edit Modal Controls
         function openAddAttendanceModal() {
             document.getElementById('modalFormTitle').innerText = 'Mark / Add Attendance Log';
             document.getElementById('formDocId').value = '';
@@ -267,7 +214,6 @@
         function openEditModal(id) {
             const doc = attendanceDatabase.find(d => d._id === id);
             if(!doc) return;
-
             document.getElementById('modalFormTitle').innerText = 'Update Student Record';
             document.getElementById('formDocId').value = doc._id;
             document.getElementById('formStudentId').value = doc.studentId;
@@ -276,18 +222,13 @@
             document.getElementById('formSection').value = doc.section;
             document.getElementById('formTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             document.getElementById('formRemarks').value = 'Updated log entry';
-
             document.getElementById('addAttendanceModal').classList.remove('hidden');
         }
 
-        function closeAddAttendanceModal() {
-            document.getElementById('addAttendanceModal').classList.add('hidden');
-        }
+        function closeAddAttendanceModal() { document.getElementById('addAttendanceModal').classList.add('hidden'); }
 
-        // Form Submit Handler
         function handleFormSubmit(e) {
             e.preventDefault();
-
             const docId = document.getElementById('formDocId').value;
             const studentId = document.getElementById('formStudentId').value;
             const studentName = document.getElementById('formStudentName').value;
@@ -297,7 +238,6 @@
             const status = document.getElementById('formStatus').value;
             const timeIn = document.getElementById('formTime').value || '09:00 AM';
             const remarks = document.getElementById('formRemarks').value || 'Updated via portal';
-
             const newLog = { date, status, timeIn, remarks };
 
             if (docId) {
@@ -314,21 +254,16 @@
             } else {
                 const newDoc = {
                     _id: '6ac6df3c' + Math.random().toString(16).substr(2, 16),
-                    studentId,
-                    studentName,
-                    subjectName,
-                    section,
+                    studentId, studentName, subjectName, section,
                     attendance: [newLog]
                 };
                 attendanceDatabase.unshift(newDoc);
                 showToast(`New student document created for ${studentName}`);
             }
-
             closeAddAttendanceModal();
             renderDashboard();
         }
 
-        // Delete Document
         function deleteDocument(id) {
             const index = attendanceDatabase.findIndex(d => d._id === id);
             if (index !== -1) {
@@ -339,11 +274,9 @@
             }
         }
 
-        // Open Individual Student History Detail Modal
         function openStudentDetailModal(id) {
             const doc = attendanceDatabase.find(d => d._id === id);
             if (!doc) return;
-
             document.getElementById('sdName').innerText = doc.studentName;
             document.getElementById('sdId').innerText = doc.studentId;
             document.getElementById('sdCourse').innerText = `${doc.subjectName} • Section ${doc.section}`;
@@ -371,7 +304,6 @@
             attendanceArray.slice().reverse().forEach((log, index) => {
                 const item = document.createElement('div');
                 item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs";
-                
                 let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
                 if(log.status==='Late') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
                 if(log.status==='Absent') badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
@@ -385,60 +317,41 @@
                             <div class="text-[11px] text-slate-400 italic">${log.remarks || 'No notes added'}</div>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">
-                        ${log.status}
-                    </span>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">${log.status}</span>
                 `;
                 timeline.appendChild(item);
             });
-
             document.getElementById('studentDetailModal').classList.remove('hidden');
         }
 
-        function closeStudentDetailModal() {
-            document.getElementById('studentDetailModal').classList.add('hidden');
-        }
+        function closeStudentDetailModal() { document.getElementById('studentDetailModal').classList.add('hidden'); }
 
-        // Export Table Data to CSV
         function exportCSV() {
             let csvRows = [["ObjectId", "StudentID", "StudentName", "SubjectName", "Section", "Date", "Status", "TimeIn", "Remarks"]];
-
             attendanceDatabase.forEach(doc => {
                 if (Array.isArray(doc.attendance)) {
                     doc.attendance.forEach(log => {
                         csvRows.push([
-                            `"${doc._id}"`,
-                            `"${doc.studentId}"`,
-                            `"${doc.studentName}"`,
-                            `"${doc.subjectName}"`,
-                            `"${doc.section}"`,
-                            `"${log.date}"`,
-                            `"${log.status}"`,
-                            `"${log.timeIn || ''}"`,
-                            `"${log.remarks || ''}"`
+                            `"${doc._id}"`, `"${doc.studentId}"`, `"${doc.studentName}"`, `"${doc.subjectName}"`,
+                            `"${doc.section}"`, `"${log.date}"`, `"${log.status}"`, `"${log.timeIn || ''}"`, `"${log.remarks || ''}"`
                         ]);
                     });
                 }
             });
-
             const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", encodeURI(csvContent));
             link.setAttribute("download", `attendance_export_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
             showToast("CSV Attendance Report downloaded successfully!");
         }
 
-        // UI Toast Notification
         function showToast(message) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMsg');
             toastMsg.innerText = message;
-
             toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
