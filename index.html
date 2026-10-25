@@ -970,6 +970,21 @@
                 toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
             }, 3000);
         }
+        // Fetch attendance records from your live Vercel backend
+async function fetchAttendance() {
+  try {
+    const response = await fetch('https://student-backend-khaki.vercel.app/api/attendance');
+    const data = await response.json();
+    console.log('Fetched attendance data:', data);
+    
+    // TODO: Add your code here to render the 'data' onto your HTML table or elements
+  } catch (error) {
+    console.error('Error fetching attendance:', error);
+  }
+}
+
+// Call the function when the page loads
+window.addEventListener('DOMContentLoaded', fetchAttendance);
     </script>
 </body>
 </html>
