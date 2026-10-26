@@ -1,5 +1,346 @@
-<!-- Application Logic Script -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack Pro - Attendance & Record Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg shadow-lg shadow-emerald-500/5">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-base text-white tracking-wide">EduTrack Pro</h1>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MongoDB Schema v2.8</span>
+                </div>
+                <p class="text-xs text-slate-400">Academic Attendance & Record Management Portal</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openSchemaModal()" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-2 transition">
+                <i class="fa-solid fa-code text-emerald-400"></i> Inspect Mongo DB JSON
+            </button>
+            <button onclick="openAddAttendanceModal()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition">
+                <i class="fa-solid fa-plus"></i> Mark Attendance
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <main class="max-w-7xl w-full mx-auto p-6 flex-grow space-y-6">
+
+        <!-- Active Context Banner -->
+        <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-layer-group text-sm"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Active Course Context</div>
+                    <div class="text-sm font-semibold text-white flex items-center gap-2 mt-0.5">
+                        <span id="displaySubject" class="text-emerald-400">Computer Networks</span> 
+                        <span class="text-slate-600">•</span> 
+                        <span id="displaySection" class="text-slate-300">BSCS-2A</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <select id="filterSubject" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
+                    <option value="ALL">All Subjects</option>
+                    <option value="Computer Networks" selected>Computer Networks</option>
+                    <option value="Advanced Game Design">Advanced Game Design</option>
+                    <option value="Human Computer Interaction 1">Human Computer Interaction 1</option>
+                </select>
+                <select id="filterSection" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
+                    <option value="ALL">All Sections</option>
+                    <option value="BSCS-2A" selected>BSCS-2A</option>
+                    <option value="BSIT-3111">BSIT-3111</option>
+                </select>
+                <select id="filterStatus" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
+                    <option value="ALL">All Statuses</option>
+                    <option value="Present">Present</option>
+                    <option value="Late">Late</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Excused">Excused</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Overall Rate -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-medium">Overall Rate</span>
+                    <i class="fa-solid fa-chart-pie text-emerald-400"></i>
+                </div>
+                <div class="mt-3">
+                    <div id="kpiRate" class="text-2xl font-bold font-mono text-white">0.0%</div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="kpiRateBar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Present -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-medium">Present Logs</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+                <div class="mt-3">
+                    <div id="kpiPresent" class="text-2xl font-bold font-mono text-emerald-400">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">On-time attendance</div>
+                </div>
+            </div>
+            <!-- Late -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-medium">Late Logs</span>
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                </div>
+                <div class="mt-3">
+                    <div id="kpiLate" class="text-2xl font-bold font-mono text-amber-400">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Grace period arrivals</div>
+                </div>
+            </div>
+            <!-- Absent -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-medium">Absent Logs</span>
+                    <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                </div>
+                <div class="mt-3">
+                    <div id="kpiAbsent" class="text-2xl font-bold font-mono text-rose-400">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Unexcused absences</div>
+                </div>
+            </div>
+            <!-- Excused -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-xs font-medium">Excused Logs</span>
+                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                </div>
+                <div class="mt-3">
+                    <div id="kpiExcused" class="text-2xl font-bold font-mono text-sky-400">0</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">With valid note</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Records Table Container -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-bold text-sm text-white">Student Attendance Records</h2>
+                    <span id="recordCountBadge" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">0 records</span>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search Student ID, Name..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <button onclick="exportCSV()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 flex items-center gap-1.5 transition whitespace-nowrap">
+                        <i class="fa-solid fa-download text-emerald-400"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950/60 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Student Info</th>
+                            <th class="py-3 px-4">Subject & Section</th>
+                            <th class="py-3 px-4">Latest Attendance Session</th>
+                            <th class="py-3 px-4 text-center">Logs Count</th>
+                            <th class="py-3 px-4 text-center">Overall Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody" class="divide-y divide-slate-800/60">
+                        <!-- Dynamically populated rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-12 text-center flex flex-col items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mb-3">
+                    <i class="fa-solid fa-folder-open text-lg"></i>
+                </div>
+                <div class="text-sm font-semibold text-slate-300">No attendance records found</div>
+                <p class="text-xs text-slate-500 mt-1">Try adjusting your filters or search keyword.</p>
+            </div>
+
+            <!-- Footer Status Bar -->
+            <div class="p-3 bg-slate-950/40 border-t border-slate-800 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+                <span id="dbStatusText">Database Status: Connecting to Vercel/MongoDB...</span>
+                <span>EduTrack Pro Cloud Engine</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Schema Inspector Modal -->
+    <div id="schemaModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-code text-emerald-400"></i>
+                    <h3 class="font-bold text-sm text-white">MongoDB BSON Document Structure</h3>
+                </div>
+                <button onclick="closeSchemaModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 bg-slate-950 font-mono text-xs overflow-x-auto max-h-96">
+                <pre id="jsonContent" class="text-emerald-300"></pre>
+            </div>
+            <div class="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <span class="text-[11px] text-slate-400 font-mono">Matches server Mongoose Schema model</span>
+                <button onclick="copyJsonToClipboard()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white flex items-center gap-1.5 transition">
+                    <i class="fa-regular fa-copy"></i> <span id="copyBtnText">Copy Raw JSON</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Attendance Modal -->
+    <div id="addAttendanceModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <h3 id="modalFormTitle" class="font-bold text-sm text-white">Mark / Add Attendance Log</h3>
+                <button onclick="closeAddAttendanceModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleFormSubmit(event)" class="p-4 space-y-3">
+                <input type="hidden" id="formDocId">
+                <div>
+                    <label class="block text-[11px] font-mono text-slate-400 mb-1">Student ID</label>
+                    <input type="text" id="formStudentId" required placeholder="2026-0001" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-mono text-slate-400 mb-1">Student Name</label>
+                    <input type="text" id="formStudentName" required placeholder="John Millar" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-mono text-slate-400 mb-1">Subject Name</label>
+                        <select id="formSubjectName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="Computer Networks">Computer Networks</option>
+                            <option value="Advanced Game Design">Advanced Game Design</option>
+                            <option value="Human Computer Interaction 1">Human Computer Interaction 1</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-mono text-slate-400 mb-1">Section</label>
+                        <select id="formSection" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="BSCS-2A">BSCS-2A</option>
+                            <option value="BSIT-3111">BSIT-3111</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-mono text-slate-400 mb-1">Date</label>
+                        <input type="date" id="formDate" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-mono text-slate-400 mb-1">Status</label>
+                        <select id="formStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                            <option value="Present">Present</option>
+                            <option value="Late">Late</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Excused">Excused</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-mono text-slate-400 mb-1">Time In</label>
+                    <input type="text" id="formTime" placeholder="08:59 AM" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-mono text-slate-400 mb-1">Remarks / Notes</label>
+                    <input type="text" id="formRemarks" placeholder="On-time arrival" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeAddAttendanceModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Detail History Modal -->
+    <div id="studentDetailModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <div>
+                    <h3 id="sdName" class="font-bold text-sm text-white">Student Name</h3>
+                    <p id="sdId" class="text-[11px] font-mono text-slate-400">2026-0000</p>
+                </div>
+                <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="flex items-center justify-between text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div id="sdCourse" class="font-semibold text-slate-200">Course & Section</div>
+                        <div id="sdObjectId" class="font-mono text-[10px] text-slate-500 mt-0.5">_id: ObjectId(...)</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] font-mono text-slate-400">Total Sessions</div>
+                        <div id="sdArrayCount" class="font-mono font-bold text-emerald-400">0</div>
+                    </div>
+                </div>
+                <!-- Session breakdown stats -->
+                <div class="grid grid-cols-4 gap-2 text-center">
+                    <div class="bg-slate-950/40 border border-slate-800 p-2 rounded-lg">
+                        <div class="text-[10px] text-slate-400 uppercase font-mono">Present</div>
+                        <div id="sdPresent" class="font-mono font-bold text-emerald-400 text-sm mt-0.5">0</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-800 p-2 rounded-lg">
+                        <div class="text-[10px] text-slate-400 uppercase font-mono">Late</div>
+                        <div id="sdLate" class="font-mono font-bold text-amber-400 text-sm mt-0.5">0</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-800 p-2 rounded-lg">
+                        <div class="text-[10px] text-slate-400 uppercase font-mono">Absent</div>
+                        <div id="sdAbsent" class="font-mono font-bold text-rose-400 text-sm mt-0.5">0</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-800 p-2 rounded-lg">
+                        <div class="text-[10px] text-slate-400 uppercase font-mono">Excused</div>
+                        <div id="sdExcused" class="font-mono font-bold text-sky-400 text-sm mt-0.5">0</div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider font-mono">Attendance History Timeline</h4>
+                    <div id="sdTimeline" class="space-y-2">
+                        <!-- Timeline items -->
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+                <button onclick="closeStudentDetailModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 border border-emerald-500/30 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div id="toastMsg" class="text-xs font-medium">Notification message</div>
+    </div>
+
+    <!-- Application Script Logic -->
     <script>
+        const VERCEL_API_URL = 'https://student-backend-khaki.vercel.app/api/attendance';
         let attendanceDatabase = [];
         let currentInspectedDocId = "";
 
@@ -13,31 +354,44 @@
 
         async function fetchAttendance() {
             try {
-                const response = await fetch('https://student-backend-khaki.vercel.app/api/attendance');
+                const statusEl = document.getElementById('dbStatusText');
+                if (statusEl) statusEl.innerText = "Database Status: Connecting to Vercel/MongoDB Atlas...";
+
+                const response = await fetch(VERCEL_API_URL);
                 const data = await response.json();
-                console.log('Fetched attendance data:', data);
                 
                 if (Array.isArray(data) && data.length > 0) {
                     attendanceDatabase = data;
                     currentInspectedDocId = attendanceDatabase[0]._id;
+                    if (statusEl) statusEl.innerText = "Database Status: Connected (MongoDB Atlas / Vercel Live)";
+                } else {
+                    if (statusEl) statusEl.innerText = "Database Status: Connected (0 records returned)";
                 }
 
                 renderDashboard();
             } catch (error) {
                 console.error('Error fetching attendance:', error);
-                // Fallback render even if fetch fails so the page isn't blank
+                const statusEl = document.getElementById('dbStatusText');
+                if (statusEl) statusEl.innerText = "Database Status: Connection Failed (Fallback Mode)";
                 renderDashboard();
             }
         }
 
         function renderDashboard() {
-            const subjectFilter = document.getElementById('filterSubject').value;
-            const sectionFilter = document.getElementById('filterSection').value;
-            const statusFilter = document.getElementById('filterStatus').value;
-            const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
+            const subjectEl = document.getElementById('filterSubject');
+            const sectionEl = document.getElementById('filterSection');
+            const statusEl = document.getElementById('filterStatus');
+            const searchEl = document.getElementById('searchInput');
 
-            document.getElementById('displaySubject').innerText = subjectFilter === 'ALL' ? 'All Subjects' : subjectFilter;
-            document.getElementById('displaySection').innerText = sectionFilter === 'ALL' ? 'All Sections' : sectionFilter;
+            const subjectFilter = subjectEl ? subjectEl.value : 'ALL';
+            const sectionFilter = sectionEl ? sectionEl.value : 'ALL';
+            const statusFilter = statusEl ? statusEl.value : 'ALL';
+            const searchKeyword = searchEl ? searchEl.value.toLowerCase().trim() : '';
+
+            const dispSub = document.getElementById('displaySubject');
+            const dispSec = document.getElementById('displaySection');
+            if (dispSub) dispSub.innerText = subjectFilter === 'ALL' ? 'All Subjects' : subjectFilter;
+            if (dispSec) dispSec.innerText = sectionFilter === 'ALL' ? 'All Sections' : sectionFilter;
 
             let filteredDocs = attendanceDatabase.filter(doc => {
                 const matchSubject = subjectFilter === 'ALL' || doc.subjectName === subjectFilter;
@@ -70,24 +424,29 @@
             const totalLogs = totalPresent + totalLate + totalAbsent + totalExcused;
             const overallRate = totalLogs > 0 ? (((totalPresent + totalLate) / totalLogs) * 100).toFixed(1) : '0.0';
 
-            document.getElementById('kpiPresent').innerText = totalPresent;
-            document.getElementById('kpiLate').innerText = totalLate;
-            document.getElementById('kpiAbsent').innerText = totalAbsent;
-            document.getElementById('kpiExcused').innerText = totalExcused;
-            document.getElementById('kpiRate').innerText = overallRate + '%';
-            document.getElementById('kpiRateBar').style.width = overallRate + '%';
-            document.getElementById('recordCountBadge').innerText = filteredDocs.length + ' students';
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            setVal('kpiPresent', totalPresent);
+            setVal('kpiLate', totalLate);
+            setVal('kpiAbsent', totalAbsent);
+            setVal('kpiExcused', totalExcused);
+            setVal('kpiRate', overallRate + '%');
+            
+            const rateBar = document.getElementById('kpiRateBar');
+            if (rateBar) rateBar.style.width = overallRate + '%';
+            
+            setVal('recordCountBadge', filteredDocs.length + ' records');
 
             const tbody = document.getElementById('attendanceTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             const emptyState = document.getElementById('emptyState');
 
             if (filteredDocs.length === 0) {
-                emptyState.classList.remove('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
                 return;
             } else {
-                emptyState.classList.add('hidden');
+                if (emptyState) emptyState.classList.add('hidden');
             }
 
             filteredDocs.forEach(doc => {
@@ -106,7 +465,7 @@
                     }
                 };
 
-                const studentNameChar = doc.studentName ? doc.studentName.charAt(doc.studentName.length - 1) : '?';
+                const studentNameChar = doc.studentName ? doc.studentName.charAt(0) : '?';
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4">
@@ -174,21 +533,14 @@
                     date: a.date, status: a.status, timeIn: a.timeIn || '09:00 AM', remarks: a.remarks || ''
                 }))
             };
-            jsonPre.innerHTML = syntaxHighlight(JSON.stringify(formattedBson, null, 2));
-            document.getElementById('schemaModal').classList.remove('hidden');
+            if (jsonPre) jsonPre.innerText = JSON.stringify(formattedBson, null, 2);
+            const modal = document.getElementById('schemaModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
-        function closeSchemaModal() { document.getElementById('schemaModal').classList.add('hidden'); }
-
-        function syntaxHighlight(json) {
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                var cls = 'json-number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) { cls = 'json-key'; } else { cls = 'json-string'; }
-                } else if (/true|false/.test(match)) { cls = 'json-boolean'; } else if (/null/.test(match)) { cls = 'json-null'; }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
+        function closeSchemaModal() { 
+            const modal = document.getElementById('schemaModal');
+            if (modal) modal.classList.add('hidden'); 
         }
 
         function copyJsonToClipboard() {
@@ -196,48 +548,58 @@
             if (!doc) return;
             navigator.clipboard.writeText(JSON.stringify(doc, null, 2));
             const copyBtnText = document.getElementById('copyBtnText');
-            copyBtnText.innerText = 'Copied!';
-            setTimeout(() => { copyBtnText.innerText = 'Copy Raw JSON'; }, 2000);
+            if (copyBtnText) copyBtnText.innerText = 'Copied!';
+            setTimeout(() => { if (copyBtnText) copyBtnText.innerText = 'Copy Raw JSON'; }, 2000);
             showToast("MongoDB Object copied to clipboard!");
         }
 
         function openAddAttendanceModal() {
-            document.getElementById('modalFormTitle').innerText = 'Mark / Add Attendance Log';
-            document.getElementById('formDocId').value = '';
-            document.getElementById('formStudentId').value = '';
-            document.getElementById('formStudentName').value = '';
-            document.getElementById('formRemarks').value = '';
-            document.getElementById('formTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('addAttendanceModal').classList.remove('hidden');
+            const titleEl = document.getElementById('modalFormTitle');
+            if (titleEl) titleEl.innerText = 'Mark / Add Attendance Log';
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+            setVal('formDocId', '');
+            setVal('formStudentId', '');
+            setVal('formStudentName', '');
+            setVal('formRemarks', '');
+            setVal('formTime', new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            const modal = document.getElementById('addAttendanceModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function openEditModal(id) {
             const doc = attendanceDatabase.find(d => d._id === id);
             if(!doc) return;
-            document.getElementById('modalFormTitle').innerText = 'Update Student Record';
-            document.getElementById('formDocId').value = doc._id;
-            document.getElementById('formStudentId').value = doc.studentId;
-            document.getElementById('formStudentName').value = doc.studentName;
-            document.getElementById('formSubjectName').value = doc.subjectName;
-            document.getElementById('formSection').value = doc.section;
-            document.getElementById('formTime').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('formRemarks').value = 'Updated log entry';
-            document.getElementById('addAttendanceModal').classList.remove('hidden');
+            const titleEl = document.getElementById('modalFormTitle');
+            if (titleEl) titleEl.innerText = 'Update Student Record';
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+            setVal('formDocId', doc._id);
+            setVal('formStudentId', doc.studentId);
+            setVal('formStudentName', doc.studentName);
+            setVal('formSubjectName', doc.subjectName);
+            setVal('formSection', doc.section);
+            setVal('formTime', new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            setVal('formRemarks', 'Updated log entry');
+            const modal = document.getElementById('addAttendanceModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
-        function closeAddAttendanceModal() { document.getElementById('addAttendanceModal').classList.add('hidden'); }
+        function closeAddAttendanceModal() { 
+            const modal = document.getElementById('addAttendanceModal');
+            if (modal) modal.classList.add('hidden'); 
+        }
 
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
-            const docId = document.getElementById('formDocId').value;
-            const studentId = document.getElementById('formStudentId').value;
-            const studentName = document.getElementById('formStudentName').value;
-            const subjectName = document.getElementById('formSubjectName').value;
-            const section = document.getElementById('formSection').value;
-            const date = document.getElementById('formDate').value;
-            const status = document.getElementById('formStatus').value;
-            const timeIn = document.getElementById('formTime').value || '09:00 AM';
-            const remarks = document.getElementById('formRemarks').value || 'Updated via portal';
+            const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+            const docId = getVal('formDocId');
+            const studentId = getVal('formStudentId');
+            const studentName = getVal('formStudentName');
+            const subjectName = getVal('formSubjectName');
+            const section = getVal('formSection');
+            const date = getVal('formDate');
+            const status = getVal('formStatus');
+            const timeIn = getVal('formTime') || '09:00 AM';
+            const remarks = getVal('formRemarks') || 'Updated via portal';
             const newLog = { date, status, timeIn, remarks };
 
             if (docId) {
@@ -249,7 +611,7 @@
                     doc.subjectName = subjectName;
                     doc.section = section;
                     doc.attendance.push(newLog);
-                    showToast(`Updated attendance array for ${studentName}`);
+                    showToast(`Updated attendance for ${studentName}`);
                 }
             } else {
                 const newDoc = {
@@ -277,13 +639,14 @@
         function openStudentDetailModal(id) {
             const doc = attendanceDatabase.find(d => d._id === id);
             if (!doc) return;
-            document.getElementById('sdName').innerText = doc.studentName;
-            document.getElementById('sdId').innerText = doc.studentId;
-            document.getElementById('sdCourse').innerText = `${doc.subjectName} • Section ${doc.section}`;
-            document.getElementById('sdObjectId').innerText = `_id: ObjectId('${doc._id}')`;
+            const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            setTxt('sdName', doc.studentName);
+            setTxt('sdId', doc.studentId);
+            setTxt('sdCourse', `${doc.subjectName} • Section ${doc.section}`);
+            setTxt('sdObjectId', `_id: ObjectId('${doc._id}')`);
             
             const attendanceArray = Array.isArray(doc.attendance) ? doc.attendance : [];
-            document.getElementById('sdArrayCount').innerText = attendanceArray.length;
+            setTxt('sdArrayCount', attendanceArray.length);
 
             let p = 0, l = 0, a = 0, e = 0;
             attendanceArray.forEach(log => {
@@ -293,38 +656,43 @@
                 else if(log.status==='Excused') e++;
             });
 
-            document.getElementById('sdPresent').innerText = p;
-            document.getElementById('sdLate').innerText = l;
-            document.getElementById('sdAbsent').innerText = a;
-            document.getElementById('sdExcused').innerText = e;
+            setTxt('sdPresent', p);
+            setTxt('sdLate', l);
+            setTxt('sdAbsent', a);
+            setTxt('sdExcused', e);
 
             const timeline = document.getElementById('sdTimeline');
-            timeline.innerHTML = '';
+            if (timeline) {
+                timeline.innerHTML = '';
+                attendanceArray.slice().reverse().forEach((log, index) => {
+                    const item = document.createElement('div');
+                    item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs";
+                    let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                    if(log.status==='Late') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                    if(log.status==='Absent') badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+                    if(log.status==='Excused') badgeColor = "bg-sky-500/10 text-sky-400 border-sky-500/20";
 
-            attendanceArray.slice().reverse().forEach((log, index) => {
-                const item = document.createElement('div');
-                item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs";
-                let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-                if(log.status==='Late') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                if(log.status==='Absent') badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                if(log.status==='Excused') badgeColor = "bg-sky-500/10 text-sky-400 border-sky-500/20";
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="font-mono text-slate-500 text-[10px]">#${attendanceArray.length - index}</span>
-                        <div>
-                            <div class="font-semibold text-slate-200">${log.date} ${log.timeIn ? '<span class="text-slate-400 font-normal">(' + log.timeIn + ')</span>' : ''}</div>
-                            <div class="text-[11px] text-slate-400 italic">${log.remarks || 'No notes added'}</div>
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono text-slate-500 text-[10px]">#${attendanceArray.length - index}</span>
+                            <div>
+                                <div class="font-semibold text-slate-200">${log.date} ${log.timeIn ? '<span class="text-slate-400 font-normal">(' + log.timeIn + ')</span>' : ''}</div>
+                                <div class="text-[11px] text-slate-400 italic">${log.remarks || 'No notes added'}</div>
+                            </div>
                         </div>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">${log.status}</span>
-                `;
-                timeline.appendChild(item);
-            });
-            document.getElementById('studentDetailModal').classList.remove('hidden');
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">${log.status}</span>
+                    `;
+                    timeline.appendChild(item);
+                });
+            }
+            const modal = document.getElementById('studentDetailModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
-        function closeStudentDetailModal() { document.getElementById('studentDetailModal').classList.add('hidden'); }
+        function closeStudentDetailModal() { 
+            const modal = document.getElementById('studentDetailModal');
+            if (modal) modal.classList.add('hidden'); 
+        }
 
         function exportCSV() {
             let csvRows = [["ObjectId", "StudentID", "StudentName", "SubjectName", "Section", "Date", "Status", "TimeIn", "Remarks"]];
@@ -351,6 +719,7 @@
         function showToast(message) {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMsg');
+            if (!toast || !toastMsg) return;
             toastMsg.innerText = message;
             toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
             setTimeout(() => {
@@ -358,3 +727,5 @@
             }, 3000);
         }
     </script>
+</body>
+</html>
