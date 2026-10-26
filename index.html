@@ -45,27 +45,32 @@
                 <div>
                     <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Active Course Context</div>
                     <div class="text-sm font-semibold text-white flex items-center gap-2 mt-0.5">
-                        <span id="displaySubject" class="text-emerald-400">Computer Networks</span> 
+                        <span id="displaySubject" class="text-emerald-400">All Subjects</span> 
                         <span class="text-slate-600">•</span> 
-                        <span id="displaySection" class="text-slate-300">BSCS-2A</span>
+                        <span id="displaySection" class="text-slate-300">All Sections</span>
                     </div>
                 </div>
             </div>
             <!-- Filters -->
             <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                 <select id="filterSubject" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
-                    <option value="ALL">All Subjects</option>
-                    <option value="Computer Networks" selected>Computer Networks</option>
+                    <option value="ALL" selected>All Subjects</option>
+                    <option value="Computer Networks">Computer Networks</option>
                     <option value="Advanced Game Design">Advanced Game Design</option>
                     <option value="Human Computer Interaction 1">Human Computer Interaction 1</option>
+                    <option value="computer graphics">computer graphics</option>
+                    <option value="database">database</option>
                 </select>
                 <select id="filterSection" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
-                    <option value="ALL">All Sections</option>
-                    <option value="BSCS-2A" selected>BSCS-2A</option>
+                    <option value="ALL" selected>All Sections</option>
+                    <option value="BSCS-2A">BSCS-2A</option>
                     <option value="BSIT-3111">BSIT-3111</option>
+                    <option value="BSIT-3B">BSIT-3B</option>
+                    <option value="bsit-3a">bsit-3a</option>
+                    <option value="bsit-2a">bsit-2a</option>
                 </select>
                 <select id="filterStatus" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
-                    <option value="ALL">All Statuses</option>
+                    <option value="ALL" selected>All Statuses</option>
                     <option value="Present">Present</option>
                     <option value="Late">Late</option>
                     <option value="Absent">Absent</option>
@@ -232,18 +237,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-mono text-slate-400 mb-1">Subject Name</label>
-                        <select id="formSubjectName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                            <option value="Computer Networks">Computer Networks</option>
-                            <option value="Advanced Game Design">Advanced Game Design</option>
-                            <option value="Human Computer Interaction 1">Human Computer Interaction 1</option>
-                        </select>
+                        <input type="text" id="formSubjectName" required placeholder="Computer Networks" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-mono text-slate-400 mb-1">Section</label>
-                        <select id="formSection" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                            <option value="BSCS-2A">BSCS-2A</option>
-                            <option value="BSIT-3111">BSIT-3111</option>
-                        </select>
+                        <input type="text" id="formSection" required placeholder="BSCS-2A" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -271,7 +269,7 @@
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" onclick="closeAddAttendanceModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition">Save Record</button>
+                    <button type="submit" id="submitBtn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition">Save Record</button>
                 </div>
             </form>
         </div>
@@ -394,8 +392,8 @@
             if (dispSec) dispSec.innerText = sectionFilter === 'ALL' ? 'All Sections' : sectionFilter;
 
             let filteredDocs = attendanceDatabase.filter(doc => {
-                const matchSubject = subjectFilter === 'ALL' || doc.subjectName === subjectFilter;
-                const matchSection = sectionFilter === 'ALL' || doc.section === sectionFilter;
+                const matchSubject = subjectFilter === 'ALL' || (doc.subjectName && doc.subjectName.toLowerCase() === subjectFilter.toLowerCase());
+                const matchSection = sectionFilter === 'ALL' || (doc.section && doc.section.toLowerCase() === sectionFilter.toLowerCase());
                 const matchSearch = (doc.studentName || '').toLowerCase().includes(searchKeyword) || 
                                     (doc.studentId || '').toLowerCase().includes(searchKeyword) ||
                                     (doc.subjectName || '').toLowerCase().includes(searchKeyword);
@@ -465,267 +463,4 @@
                     }
                 };
 
-                const studentNameChar = doc.studentName ? doc.studentName.charAt(0) : '?';
-
-                tr.innerHTML = `
-                    <td class="py-3.5 px-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-300 font-mono text-xs border border-slate-700">
-                                ${studentNameChar}
-                            </div>
-                            <div>
-                                <div class="font-semibold text-white cursor-pointer hover:text-emerald-400 transition" onclick="openStudentDetailModal('${doc._id}')">${doc.studentName}</div>
-                                <div class="text-[11px] font-mono text-slate-400">${doc.studentId}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3.5 px-4">
-                        <div class="text-slate-200 font-medium">${doc.subjectName}</div>
-                        <div class="text-[11px] text-slate-400 font-mono">${doc.section}</div>
-                    </td>
-                    <td class="py-3.5 px-4">
-                        <div class="text-slate-300 font-mono text-[11px]">${latestLog.date} ${latestLog.timeIn ? '• ' + latestLog.timeIn : ''}</div>
-                        <div class="text-[11px] text-slate-400 italic truncate max-w-[180px]">${latestLog.remarks || 'No remarks'}</div>
-                    </td>
-                    <td class="py-3.5 px-4 text-center">
-                        <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-slate-300 text-[11px]">
-                            ${attendanceArray.length} sessions
-                        </span>
-                    </td>
-                    <td class="py-3.5 px-4 text-center">
-                        ${getBadge(latestLog.status)}
-                    </td>
-                    <td class="py-3.5 px-4 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="openStudentDetailModal('${doc._id}')" title="View Full History" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md transition">
-                                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
-                            </button>
-                            <button onclick="openEditModal('${doc._id}')" title="Add / Update Record" class="p-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-md transition">
-                                <i class="fa-solid fa-pen-to-square text-xs"></i>
-                            </button>
-                            <button onclick="inspectDocument('${doc._id}')" title="View Mongo BSON JSON" class="p-1.5 text-teal-400 hover:text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 rounded-md transition">
-                                <i class="fa-solid fa-code text-xs"></i>
-                            </button>
-                            <button onclick="deleteDocument('${doc._id}')" title="Delete Student Record" class="p-1.5 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 rounded-md transition">
-                                <i class="fa-solid fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function applyFilters() { renderDashboard(); }
-        function inspectDocument(id) { currentInspectedDocId = id; openSchemaModal(); }
-
-        function openSchemaModal() {
-            const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
-            if (!doc) return;
-            const jsonPre = document.getElementById('jsonContent');
-            const formattedBson = {
-                _id: `ObjectId('${doc._id}')`,
-                studentId: doc.studentId,
-                studentName: doc.studentName,
-                subjectName: doc.subjectName,
-                section: doc.section,
-                attendance: (doc.attendance || []).map(a => ({
-                    date: a.date, status: a.status, timeIn: a.timeIn || '09:00 AM', remarks: a.remarks || ''
-                }))
-            };
-            if (jsonPre) jsonPre.innerText = JSON.stringify(formattedBson, null, 2);
-            const modal = document.getElementById('schemaModal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeSchemaModal() { 
-            const modal = document.getElementById('schemaModal');
-            if (modal) modal.classList.add('hidden'); 
-        }
-
-        function copyJsonToClipboard() {
-            const doc = attendanceDatabase.find(d => d._id === currentInspectedDocId) || attendanceDatabase[0];
-            if (!doc) return;
-            navigator.clipboard.writeText(JSON.stringify(doc, null, 2));
-            const copyBtnText = document.getElementById('copyBtnText');
-            if (copyBtnText) copyBtnText.innerText = 'Copied!';
-            setTimeout(() => { if (copyBtnText) copyBtnText.innerText = 'Copy Raw JSON'; }, 2000);
-            showToast("MongoDB Object copied to clipboard!");
-        }
-
-        function openAddAttendanceModal() {
-            const titleEl = document.getElementById('modalFormTitle');
-            if (titleEl) titleEl.innerText = 'Mark / Add Attendance Log';
-            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-            setVal('formDocId', '');
-            setVal('formStudentId', '');
-            setVal('formStudentName', '');
-            setVal('formRemarks', '');
-            setVal('formTime', new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-            const modal = document.getElementById('addAttendanceModal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function openEditModal(id) {
-            const doc = attendanceDatabase.find(d => d._id === id);
-            if(!doc) return;
-            const titleEl = document.getElementById('modalFormTitle');
-            if (titleEl) titleEl.innerText = 'Update Student Record';
-            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-            setVal('formDocId', doc._id);
-            setVal('formStudentId', doc.studentId);
-            setVal('formStudentName', doc.studentName);
-            setVal('formSubjectName', doc.subjectName);
-            setVal('formSection', doc.section);
-            setVal('formTime', new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-            setVal('formRemarks', 'Updated log entry');
-            const modal = document.getElementById('addAttendanceModal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeAddAttendanceModal() { 
-            const modal = document.getElementById('addAttendanceModal');
-            if (modal) modal.classList.add('hidden'); 
-        }
-
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-            const docId = getVal('formDocId');
-            const studentId = getVal('formStudentId');
-            const studentName = getVal('formStudentName');
-            const subjectName = getVal('formSubjectName');
-            const section = getVal('formSection');
-            const date = getVal('formDate');
-            const status = getVal('formStatus');
-            const timeIn = getVal('formTime') || '09:00 AM';
-            const remarks = getVal('formRemarks') || 'Updated via portal';
-            const newLog = { date, status, timeIn, remarks };
-
-            if (docId) {
-                const doc = attendanceDatabase.find(d => d._id === docId);
-                if (doc) {
-                    if (!Array.isArray(doc.attendance)) doc.attendance = [];
-                    doc.studentId = studentId;
-                    doc.studentName = studentName;
-                    doc.subjectName = subjectName;
-                    doc.section = section;
-                    doc.attendance.push(newLog);
-                    showToast(`Updated attendance for ${studentName}`);
-                }
-            } else {
-                const newDoc = {
-                    _id: '6ac6df3c' + Math.random().toString(16).substr(2, 16),
-                    studentId, studentName, subjectName, section,
-                    attendance: [newLog]
-                };
-                attendanceDatabase.unshift(newDoc);
-                showToast(`New student document created for ${studentName}`);
-            }
-            closeAddAttendanceModal();
-            renderDashboard();
-        }
-
-        function deleteDocument(id) {
-            const index = attendanceDatabase.findIndex(d => d._id === id);
-            if (index !== -1) {
-                const name = attendanceDatabase[index].studentName;
-                attendanceDatabase.splice(index, 1);
-                renderDashboard();
-                showToast(`Deleted document for ${name}`);
-            }
-        }
-
-        function openStudentDetailModal(id) {
-            const doc = attendanceDatabase.find(d => d._id === id);
-            if (!doc) return;
-            const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            setTxt('sdName', doc.studentName);
-            setTxt('sdId', doc.studentId);
-            setTxt('sdCourse', `${doc.subjectName} • Section ${doc.section}`);
-            setTxt('sdObjectId', `_id: ObjectId('${doc._id}')`);
-            
-            const attendanceArray = Array.isArray(doc.attendance) ? doc.attendance : [];
-            setTxt('sdArrayCount', attendanceArray.length);
-
-            let p = 0, l = 0, a = 0, e = 0;
-            attendanceArray.forEach(log => {
-                if(log.status==='Present') p++;
-                else if(log.status==='Late') l++;
-                else if(log.status==='Absent') a++;
-                else if(log.status==='Excused') e++;
-            });
-
-            setTxt('sdPresent', p);
-            setTxt('sdLate', l);
-            setTxt('sdAbsent', a);
-            setTxt('sdExcused', e);
-
-            const timeline = document.getElementById('sdTimeline');
-            if (timeline) {
-                timeline.innerHTML = '';
-                attendanceArray.slice().reverse().forEach((log, index) => {
-                    const item = document.createElement('div');
-                    item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs";
-                    let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-                    if(log.status==='Late') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                    if(log.status==='Absent') badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                    if(log.status==='Excused') badgeColor = "bg-sky-500/10 text-sky-400 border-sky-500/20";
-
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <span class="font-mono text-slate-500 text-[10px]">#${attendanceArray.length - index}</span>
-                            <div>
-                                <div class="font-semibold text-slate-200">${log.date} ${log.timeIn ? '<span class="text-slate-400 font-normal">(' + log.timeIn + ')</span>' : ''}</div>
-                                <div class="text-[11px] text-slate-400 italic">${log.remarks || 'No notes added'}</div>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeColor}">${log.status}</span>
-                    `;
-                    timeline.appendChild(item);
-                });
-            }
-            const modal = document.getElementById('studentDetailModal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeStudentDetailModal() { 
-            const modal = document.getElementById('studentDetailModal');
-            if (modal) modal.classList.add('hidden'); 
-        }
-
-        function exportCSV() {
-            let csvRows = [["ObjectId", "StudentID", "StudentName", "SubjectName", "Section", "Date", "Status", "TimeIn", "Remarks"]];
-            attendanceDatabase.forEach(doc => {
-                if (Array.isArray(doc.attendance)) {
-                    doc.attendance.forEach(log => {
-                        csvRows.push([
-                            `"${doc._id}"`, `"${doc.studentId}"`, `"${doc.studentName}"`, `"${doc.subjectName}"`,
-                            `"${doc.section}"`, `"${log.date}"`, `"${log.status}"`, `"${log.timeIn || ''}"`, `"${log.remarks || ''}"`
-                        ]);
-                    });
-                }
-            });
-            const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", `attendance_export_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("CSV Attendance Report downloaded successfully!");
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            if (!toast || !toastMsg) return;
-            toastMsg.innerText = message;
-            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
-        }
-    </script>
-</body>
-</html>
+                const studentNameChar = doc.studentName ? doc.studentName.charAt(
